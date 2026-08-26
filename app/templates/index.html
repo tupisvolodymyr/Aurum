@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "partials/game_card.html" import game_card %}
+{% block title %}AURUM — Premium Online Casino{% endblock %}
+
+{% block content %}
+{% if user and recently_played %}
+<section class="game-row">
+    <h2 class="section-title">Recently Played</h2>
+    <div class="game-row-scroller">
+        {% for game in recently_played %}{{ game_card(game, favorite_ids) }}{% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if user and recommended %}
+<section class="game-row">
+    <h2 class="section-title">Recommended For You</h2>
+    <div class="game-row-scroller">
+        {% for game in recommended %}{{ game_card(game, favorite_ids) }}{% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="lobby" id="lobby">
+    <div class="lobby-toolbar">
+        <div class="category-tabs" id="category-tabs">
+            <button type="button" class="tab is-active" data-tab="all">All Games</button>
+            <button type="button" class="tab" data-tab="slots">Slots</button>
+            <button type="button" class="tab" data-tab="live_casino">Live Casino</button>
+            <button type="button" class="tab" data-tab="roulette">Roulette</button>
+            <button type="button" class="tab" data-tab="blackjack">Blackjack</button>
+            <button type="button" class="tab" data-tab="poker">Poker</button>
+            <button type="button" class="tab" data-tab="wheel">Wheel</button>
+            <button type="button" class="tab" data-tab="new">New Games</button>
+            <button type="button" class="tab" data-tab="popular">Popular Games</button>
+        </div>
+        <input type="search" id="game-search" class="game-search" placeholder="Search games...">
+    </div>
+
+    <div class="lobby-body">
+        <div class="game-grid" id="game-grid">
+            {% for game in games %}{{ game_card(game, favorite_ids) }}{% endfor %}
+        </div>
+
+        <div class="empty-state" id="empty-state" hidden>
+            <h3>No games here yet</h3>
+            <p>This category is being prepared — check back soon, or try a different filter.</p>
+        </div>
+
+        <aside class="lobby-sidebar">
+            <div class="sidebar-card">
+                <h3>Latest Winners</h3>
+                <ul class="winners-list">
+                    {% for winner in winners %}
+                    <li>
+                        <span class="winner-name">{{ winner.username }}</span>
+                        <span class="winner-game">{{ winner.game_title }}</span>
+                        <span class="winner-amount">{{ winner.amount|money }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </aside>
+    </div>
+</section>
+
+<section class="trust">
+    <h2 class="section-title">Why Players Trust AURUM</h2>
+    <div class="trust-grid">
+        <div class="trust-item"><span class="trust-index">01</span><h4>Secure Payments</h4><p>Encrypted transactions on every deposit and withdrawal.</p></div>
+        <div class="trust-item"><span class="trust-index">02</span><h4>24/7 Support</h4><p>Our team is available around the clock, every day of the year.</p></div>
+        <div class="trust-item"><span class="trust-index">03</span><h4>Responsible Gaming</h4><p>Tools and limits to help you stay in control of your play.</p></div>
+        <div class="trust-item"><span class="trust-index">04</span><h4>Fair Play</h4><p>Independently designed RNG behind every spin.</p></div>
+        <div class="trust-item"><span class="trust-index">05</span><h4>Secure Account</h4><p>Modern password hashing and revocable login sessions.</p></div>
+        <div class="trust-item"><span class="trust-index">06</span><h4>Fast Withdrawals</h4><p>Streamlined processing so winnings reach you quickly.</p></div>
+    </div>
+</section>
+{% endblock %}

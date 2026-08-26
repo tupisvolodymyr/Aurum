@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Вхід — AURUM{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h1>Вхід</h1>
+
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <form action="/auth/login" method="post" class="auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="next" value="{{ next or '' }}">
+
+        <label for="identifier">Логін або email</label>
+        <input type="text" id="identifier" name="identifier" required autocomplete="username">
+
+        <label for="password">Пароль</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+
+        <button type="submit" class="btn btn-primary btn-block">Увійти</button>
+    </form>
+
+    <p class="auth-switch">Немає акаунту? <a href="/register{{ '?next=' + next|urlencode if next else '' }}">Зареєструватись</a></p>
+</div>
+{% endblock %}

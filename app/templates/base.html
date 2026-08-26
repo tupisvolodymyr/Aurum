@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}AURUM — Premium Online Casino{% endblock %}</title>
+    <link rel="icon" href="/static/img/logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/css/style.css?v={{ asset_version('css/style.css') }}">
+    <script>window.CASINO = { isAuthenticated: {{ 'true' if user else 'false' }} };</script>
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="/">
+                <img src="/static/img/logo.svg" alt="AURUM" class="logo" width="52" height="52">
+                <span class="brand-word">AURUM</span>
+            </a>
+
+            <nav class="main-nav" id="main-nav">
+                <a href="/">Home</a>
+                <a href="/#lobby" data-filter="slots">Slots</a>
+                <a href="/#lobby" data-filter="live_casino">Live Casino</a>
+                <a href="/#lobby" data-filter="table_games">Table Games</a>
+            </nav>
+
+            <div class="auth-actions">
+                {% if user %}
+                    <span id="balance" class="balance">{{ wallet.balance }} ₴</span>
+                    <a href="/account" class="username">{{ user.username }}</a>
+                    <form action="/auth/logout" method="post" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-ghost">Log Out</button>
+                    </form>
+                {% else %}
+                    <a class="btn btn-ghost" href="/login">Log In</a>
+                    <a class="btn btn-primary" href="/register">Sign Up</a>
+                {% endif %}
+            </div>
+
+            <button type="button" id="nav-toggle" class="nav-toggle" aria-label="Menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a class="brand" href="/">
+                    <img src="/static/img/logo.svg" alt="AURUM" class="logo" width="40" height="40">
+                    <span class="brand-word">AURUM</span>
+                </a>
+                <p class="footer-tagline">Premium slots, table games &amp; live casino — play responsibly.</p>
+                <div class="social-icons">
+                    <a href="#" aria-label="Twitter">𝕏</a>
+                    <a href="#" aria-label="Instagram">◎</a>
+                    <a href="#" aria-label="Facebook">f</a>
+                    <a href="#" aria-label="Telegram">✈</a>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h4>Company</h4>
+                <a href="#">About Us</a>
+                <a href="#">Contact</a>
+                <a href="#">FAQ</a>
+            </div>
+
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <a href="#">Terms &amp; Conditions</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">AML Policy</a>
+                <a href="#">Responsible Gaming</a>
+            </div>
+
+            <div class="footer-col">
+                <h4>Payment Methods</h4>
+                <div class="payment-badges">
+                    <span>VISA</span>
+                    <span>Mastercard</span>
+                    <span>Apple Pay</span>
+                    <span>Crypto</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; {{ current_year }} AURUM. All rights reserved. 18+. Please play responsibly.</p>
+        </div>
+    </footer>
+
+    <div id="auth-modal" class="modal-overlay" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+            <button type="button" class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+            <h2 id="auth-modal-title">Join AURUM to Play</h2>
+            <p>Create a free account or log in to spin the reels and track your favorite games.</p>
+            <div class="modal-actions">
+                <a id="modal-login-link" href="/login" class="btn btn-ghost btn-block">Log In</a>
+                <a id="modal-signup-link" href="/register" class="btn btn-primary btn-block">Create Account</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <script src="/static/js/app.js?v={{ asset_version('js/app.js') }}" defer></script>
+</body>
+</html>
