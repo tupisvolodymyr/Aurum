@@ -31,6 +31,18 @@ async def test_wheel_page_requires_login(client):
     assert "next=" in str(resp.url)
 
 
+async def test_wheel_page_keeps_site_chrome_and_frame_options(client):
+    await _register(client, username="e2e_wheel_frame_opts", email="e2e_wheel_frame_opts@example.com")
+    resp = await client.get("/games/golden-wheel")
+    assert resp.status_code == 200
+    # The colorful "arcade" game box lives inside the normal page, with the
+    # site's own header/nav still present around it — not a separate
+    # embed/iframe document.
+    assert 'id="main-nav"' in resp.text
+    assert 'id="wheel-form"' in resp.text
+    assert resp.headers["x-frame-options"] == "DENY"
+
+
 async def test_register_then_wheel_spin_updates_balance_consistently(client):
     await _register(client, username="e2e_wheel_player", email="e2e_wheel_player@example.com")
 
@@ -45,7 +57,7 @@ async def test_register_then_wheel_spin_updates_balance_consistently(client):
     assert spin_resp.status_code == 200
 
     data = spin_resp.json()
-    assert data["landed_multiplier"] in (2, 3, 5, 10, 20, 40)
+    assert data["landed_multiplier"] in (2, 5, 10, 20, 25, 50, 100)
     assert data["chosen_multiplier"] == 2
     assert data["balance"] == 1000 - 50 + data["winnings"]
     if data["landed_multiplier"] == 2:
@@ -62,7 +74,7 @@ async def test_wheel_spin_below_minimum_bet_is_rejected(client):
 
     resp = await client.post("/games/golden-wheel/spin", data={"bet": "1", "multiplier": "2", "csrf_token": csrf})
     assert resp.status_code == 400
-    assert "Ставка має бути" in resp.json()["error"]
+    assert "Bet must be between" in resp.json()["error"]
 
 
 async def test_wheel_spin_rejects_invalid_multiplier(client):
@@ -73,7 +85,7 @@ async def test_wheel_spin_rejects_invalid_multiplier(client):
 
     resp = await client.post("/games/golden-wheel/spin", data={"bet": "50", "multiplier": "7", "csrf_token": csrf})
     assert resp.status_code == 400
-    assert "Невірний вибір" in resp.json()["error"]
+    assert "Invalid multiplier" in resp.json()["error"]
 
 
 async def test_wheel_spin_without_csrf_token_is_rejected(client):

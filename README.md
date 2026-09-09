@@ -66,3 +66,62 @@ docker compose up --build
 ```bash
 pytest -q
 ```
+
+## Deploying to Vercel
+
+The app is a standard FastAPI/ASGI app, so `app/main.py` didn't need to
+change — `api/index.py` just re-exports it, and `vercel.json` rewrites every
+request to that one Python function.
+
+**Vercel's filesystem is read-only and each function invocation can be a
+fresh instance, so this deployment needs an external Postgres — the bundled
+SQLite (`casino.db`) will not work there.** [Neon](https://neon.tech) has a
+free tier and a one-click Vercel integration; Supabase/Railway Postgres work
+the same way.
+
+1. **Provision Postgres** and grab its connection string. SQLAlchemy's async
+   driver needs `postgresql+asyncpg://` (not the bare `postgresql://` most
+   providers give you) — e.g.:
+   `postgresql+asyncpg://user:pass@host/dbname?sslmode=require`.
+
+2. **Run migrations against it once, from your machine** (Vercel never runs
+   this for you — its functions only serve requests):
+   ```bash
+   DATABASE_URL="postgresql+asyncpg://..." alembic upgrade head
+   ```
+   Re-run this after any future migration is added, same as you would for
+   any other remote database.
+
+3. **Install the Vercel CLI and link the project:**
+   ```bash
+   npm i -g vercel
+   vercel login
+   vercel link
+   ```
+
+4. **Set environment variables** (Vercel dashboard → Project → Settings →
+   Environment Variables, or `vercel env add <NAME>`):
+   | Variable | Value |
+   |---|---|
+   | `SECRET_KEY` | `python -c "import secrets; print(secrets.token_urlsafe(64))"` |
+   | `DATABASE_URL` | the `postgresql+asyncpg://...` string from step 1 |
+   | `ENVIRONMENT` | `production` |
+   | `DEBUG` | `false` |
+
+5. **Deploy:**
+   ```bash
+   vercel --prod
+   ```
+   (Or connect the GitHub repo in the Vercel dashboard for automatic
+   deploys on every push — same env vars, same one-time migration step.)
+
+Notes specific to this setup:
+- `app/database.py` switches to `NullPool` automatically when Vercel's
+  `VERCEL=1` environment variable is present, since a warm connection pool
+  doesn't help (and can exhaust a free-tier Postgres's connection limit)
+  across short-lived serverless instances. Local dev and Docker are
+  unaffected.
+- `/static/*` is served through the same Python function (FastAPI's
+  `StaticFiles` mount) rather than as separate Vercel static assets — fine
+  for a demo, but worth moving to Vercel's own static hosting if this ever
+  needs to handle real production traffic.

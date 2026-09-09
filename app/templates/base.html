@@ -7,6 +7,7 @@
     <title>{% block title %}AURUM — Premium Online Casino{% endblock %}</title>
     <link rel="icon" href="/static/img/logo.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/static/css/style.css?v={{ asset_version('css/style.css') }}">
+    {% block extra_head %}{% endblock %}
     <script>window.CASINO = { isAuthenticated: {{ 'true' if user else 'false' }} };</script>
 </head>
 <body>
@@ -110,5 +111,7 @@
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
     <script src="/static/js/app.js?v={{ asset_version('js/app.js') }}" defer></script>
+    <script src="/static/js/vendor/pixi.min.js?v={{ asset_version('js/vendor/pixi.min.js') }}" defer></script>
+    <script src="/static/js/confetti.js?v={{ asset_version('js/confetti.js') }}" defer></script>
 </body>
 </html>

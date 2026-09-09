@@ -75,6 +75,9 @@
         e.preventDefault();
         openAuthModal(playBtn.dataset.href || playBtn.getAttribute("href"));
       }
+      // Otherwise let the real <a href="/games/{slug}"> navigate normally —
+      // the game page itself is the colorful "arcade" presentation now,
+      // not a modal/iframe layered over the lobby.
       return;
     }
 
@@ -196,7 +199,9 @@
 
   applyFilters();
 
-  // Small shared API surface for page-specific scripts (e.g. slots.js)
-  // loaded after this file — keeps everything else in this closure private.
-  window.AURUM = { csrfToken, showToast, flashBalance, openAuthModal };
+  // Small shared API surface for page-specific scripts (e.g. slots.js,
+  // confetti.js) — merge rather than overwrite, since confetti.js may run
+  // before or after this file depending on the page and shouldn't have its
+  // window.AURUM.confetti entry clobbered (or vice versa).
+  window.AURUM = Object.assign(window.AURUM || {}, { csrfToken, showToast, flashBalance, openAuthModal });
 })();

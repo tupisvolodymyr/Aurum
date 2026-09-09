@@ -83,17 +83,44 @@ a {
     color: inherit;
 }
 
-/* ---------- Buttons ---------- */
+/* ---------- Buttons ----------
+   Consistent height/radius/states across every button on the site — hover,
+   active (press-down), disabled, and a visible focus ring for keyboard
+   navigation (only .btn itself needed this centrally; the wheel's own
+   premium spin button and multiplier picker get matching focus rings
+   further down since they intentionally don't share the flat .btn look). */
 .btn {
-    display: inline-block;
-    padding: 9px 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    padding: 0 20px;
     border-radius: var(--radius);
     border: 1px solid transparent;
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
     font-size: 0.95rem;
-    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background 0.15s;
+    font-family: inherit;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background 0.15s, filter 0.15s;
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(1px) scale(0.98);
+}
+
+.btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+    transform: none;
+}
+
+.btn:focus-visible,
+.wheel-spin-btn:focus-visible,
+.multiplier-choice:focus-visible,
+.favorite-btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
 }
 
 .btn-primary {
@@ -101,7 +128,7 @@ a {
     color: #141414;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
     background: var(--gold-dark);
 }
 
@@ -111,7 +138,7 @@ a {
     border-color: var(--border);
 }
 
-.btn-ghost:hover {
+.btn-ghost:hover:not(:disabled) {
     border-color: var(--gold);
     color: var(--gold);
 }
@@ -410,14 +437,46 @@ a {
     border-bottom: 1px solid var(--border);
 }
 
-.game-thumb svg {
+.game-thumb svg,
+.game-thumb img {
     display: block;
     width: 100%;
     height: 100%;
     transition: transform 0.3s;
 }
 
-.game-card:hover .game-thumb svg {
+/* Real photos (game_photos in game_card.html — Golden Reels, Golden Wheel)
+   are full portrait posters (480x640) with the game's own name baked into
+   the art itself near the bottom. The card's thumb box is landscape
+   (300x190): cropping a poster that tall down to that wide with
+   object-fit: cover was cutting the title clean off, or slicing through
+   the wheel/reels graphic depending on the focal point chosen — there's no
+   single crop window in a box this much wider than the source that keeps
+   both. object-fit: contain guarantees the *entire* poster is always
+   visible (nothing is ever cropped), and the glow behind it turns the
+   letterboxed sides into a deliberate "spotlighted poster" look instead of
+   dead space. */
+.game-thumb--photo {
+    background:
+        radial-gradient(circle at 50% 42%, rgba(252, 218, 24, 0.16), transparent 62%),
+        radial-gradient(circle at 50% 88%, rgba(111, 11, 199, 0.24), transparent 60%),
+        linear-gradient(180deg, #1c1420 0%, #0b0810 100%);
+}
+
+.game-thumb--photo img {
+    object-fit: contain;
+    object-position: 50% 50%;
+    padding: 6px 46px;
+    box-sizing: border-box;
+    filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55));
+}
+
+.game-card:hover .game-thumb--photo img {
+    transform: scale(1.06);
+}
+
+.game-card:hover .game-thumb svg,
+.game-card:hover .game-thumb img {
     transform: scale(1.04);
 }
 
@@ -1063,11 +1122,12 @@ a {
 .slot-machine {
     max-width: 420px;
     margin: 24px auto;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    background: radial-gradient(circle at 50% 0%, rgba(240, 199, 80, 0.12), transparent 60%), var(--surface);
+    border: 1px solid rgba(240, 199, 80, 0.35);
+    border-radius: var(--radius-lg);
     padding: 32px;
     text-align: center;
+    box-shadow: 0 0 0 1px rgba(240, 199, 80, 0.08), 0 20px 50px rgba(0, 0, 0, 0.4);
     transition: box-shadow 0.3s;
 }
 
@@ -1083,20 +1143,42 @@ a {
 .slot-reels {
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: 14px;
     margin-bottom: 20px;
-    perspective: 400px;
+    /* A gentle 3D "barrel" tilt on the whole reel bank, consistent with the
+       wheel game's real 3D presentation elsewhere on the site. */
+    perspective: 500px;
+    transform-style: preserve-3d;
 }
 
 .reel-window {
     position: relative;
-    width: 80px;
-    height: 80px;
+    width: 84px;
+    height: 84px;
     overflow: hidden;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
+    background: #16100a;
+    border: 2px solid var(--reel-accent, #f0c750);
     border-radius: var(--radius);
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.65), 0 0 14px -2px var(--reel-accent, #f0c750);
+    transform: rotateX(6deg);
     transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+/* Jewel-tone accent per reel — matching the wheel's vivid palette instead
+   of a single flat gold everywhere. */
+.reel-window:nth-child(1) { --reel-accent: #ff8a3d; }
+.reel-window:nth-child(2) { --reel-accent: #b23dff; }
+.reel-window:nth-child(3) { --reel-accent: #3d8bff; }
+
+.reel-window::before {
+    /* Glassy highlight across the top of the window for a rounded, lit
+       "screen" feel rather than a flat cut-out. */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.16), transparent 45%);
+    pointer-events: none;
+    z-index: 2;
 }
 
 .reel-window::after {
@@ -1105,7 +1187,7 @@ a {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(var(--surface-2), transparent 30%, transparent 70%, var(--surface-2));
+    background: linear-gradient(#16100a, transparent 30%, transparent 70%, #16100a);
     pointer-events: none;
 }
 
@@ -1116,13 +1198,14 @@ a {
 }
 
 .reel-symbol {
-    width: 80px;
-    height: 80px;
+    width: 84px;
+    height: 84px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5rem;
+    font-size: 2.7rem;
+    filter: drop-shadow(0 0 8px rgba(255, 210, 61, 0.35));
 }
 
 @keyframes reel-bounce {
@@ -1169,7 +1252,7 @@ a {
 .slot-form {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
     align-items: stretch;
 }
 
@@ -1198,7 +1281,7 @@ a {
 }
 
 .paytable {
-    margin-top: 24px;
+    margin-top: 14px;
     text-align: left;
     color: var(--text-dim);
     font-size: 0.85rem;
@@ -1226,94 +1309,383 @@ a {
 }
 
 /* ---------- Wheel machine (game page) ---------- */
+/* The page column the whole game sits in — wide, so the wheel has real
+   room to be the hero instead of being squeezed into a narrow card. */
+.wheel-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 40px;
+}
+
+/* Tighter than the site-wide .back-link default on this page specifically
+   — every pixel of fixed vertical chrome above the wheel eats into the
+   budget for fitting the whole game on one screen without scrolling. */
+.wheel-page > .back-link {
+    margin: 10px 0 0 0;
+}
+
+/* ---------- Game stage ----------
+   A dedicated dark casino "panel", not a generic grey card: chamfered
+   corners (clip-path), layered radial glow (gold + purple) instead of a
+   flat fill, and an outer ambient glow via filter (box-shadow would get
+   cut off by clip-path, drop-shadow follows the clipped silhouette
+   instead). Direct children (wheel, result, controls) are laid out with
+   flex + gap — real document flow, not absolute positioning — so they can
+   never overlap no matter what size the wheel scales to. */
 .wheel-machine {
-    max-width: 460px;
-    margin: 24px auto;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 32px;
+    --chamfer: clamp(16px, 2.6vw, 32px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Fixed (not vw-scaled) gap — on a wide monitor the wheel already gets
+       plenty of room from its own size; what actually needs to stay tight
+       so the whole game fits in one viewport without scrolling is the
+       *vertical* rhythm, which vw-based gaps don't help with (viewport
+       width has nothing to do with the available vertical space). */
+    gap: 9px;
+    width: 100%;
+    margin: 8px auto 0;
+    padding: clamp(10px, 1.6vw, 22px) clamp(16px, 4vw, 40px) clamp(10px, 1.6vw, 18px);
+    background:
+        radial-gradient(circle at 50% 12%, rgba(252, 218, 24, 0.12), transparent 42%),
+        radial-gradient(circle at 12% 88%, rgba(111, 11, 199, 0.22), transparent 48%),
+        radial-gradient(circle at 88% 88%, rgba(94, 16, 12, 0.26), transparent 48%),
+        linear-gradient(180deg, #150c1f 0%, #0a0610 100%);
+    border: 1px solid rgba(252, 218, 24, 0.22);
+    clip-path: polygon(
+        var(--chamfer) 0, calc(100% - var(--chamfer)) 0, 100% var(--chamfer),
+        100% calc(100% - var(--chamfer)), calc(100% - var(--chamfer)) 100%, var(--chamfer) 100%,
+        0 calc(100% - var(--chamfer)), 0 var(--chamfer)
+    );
+    filter: drop-shadow(0 0 70px rgba(111, 11, 199, 0.22)) drop-shadow(0 30px 70px rgba(0, 0, 0, 0.55));
     text-align: center;
 }
 
+/* The wheel itself: ~66% of the stage's own width (not the viewport), so
+   it scales with the panel rather than overflowing it, capped so it never
+   gets absurd on ultra-wide monitors and never too small to read on
+   phones. Generous room is left on every side inside the padded stage
+   above, so the disc never touches the panel's edge.
+   width == height via aspect-ratio, plus an explicit border-radius as a
+   belt-and-suspenders guarantee: this box (and everything inside it) is
+   always a true circle — only the surrounding .wheel-machine panel gets
+   the chamfered/clipped silhouette, never the wheel itself. */
 .wheel-stage {
     position: relative;
-    width: 260px;
-    height: 260px;
-    margin: 0 auto 24px;
+    /* Bounded by BOTH the panel's width (66%, capped at 580px — a ~15%
+       trim from the previous 680px hero size) AND the viewport's height
+       (58vh), whichever is smaller. The vh term is what actually
+       guarantees the whole game — wheel, result, controls, help — fits
+       in one screen without scrolling on a normal desktop window; the %
+       term is what keeps the wheel looking dominant rather than tiny on
+       a tall/ultrawide viewport where 58vh alone would be enormous. */
+    width: clamp(220px, min(70%, 38vh), 620px);
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
 }
 
+/* ---------- Background atmosphere ---------- */
+.wheel-bg-glow {
+    position: absolute;
+    /* Was -14% — at that size the glow's own bottom edge crept past the
+       stage and visually overlapped the result text below it (the stage
+       and message never touch in actual layout, but this decorative glow
+       is deliberately oversized to bleed past the wheel, and used to
+       bleed too far). Kept comfortably inside the gap the flex layout
+       already reserves between the wheel and the text underneath it. */
+    /* This circle is deliberately bigger than the gold wheel (inset -6%
+       instead of 0) so its glow bleeds outward atmospherically — but the
+       previous gradient ended on a *solid, opaque* color at 100%, which
+       gave this bigger circle a crisp, visible edge of its own: a second,
+       darker ring sitting concentrically around the gold rim. At a glance
+       that read as "the gold wheel is inset/clipped inside a round grey
+       outline" rather than as ambient light — a real, valid bug report,
+       not just a perception issue. Fading all the way to transparent
+       removes that hard edge entirely: the glow now blends into the
+       stage's own background with no second circle ever visible. */
+    inset: -6%;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 50% 40%, rgba(252, 218, 24, 0.22), transparent 34%),
+        radial-gradient(circle at 50% 52%, rgba(94, 16, 12, 0.85) 0%, rgba(24, 2, 11, 0.45) 45%, transparent 72%);
+    z-index: 0;
+}
+
+.wheel-rays {
+    position: absolute;
+    inset: -3%;
+    border-radius: 50%;
+    background: repeating-conic-gradient(from 0deg, rgba(252, 239, 94, 0.12) 0deg 3deg, transparent 3deg 16deg);
+    mix-blend-mode: screen;
+    z-index: 1;
+    pointer-events: none;
+    animation: wheel-rays-spin 50s linear infinite;
+    transition: opacity 0.3s;
+}
+
+/* ---------- Spinning state ----------
+   A bright, energetic look for exactly as long as the wheel is actually
+   moving (class is toggled by wheel.js in lockstep with the real rAF
+   animation, so it can never drift out of sync with it). The rays speed
+   way up and burn brighter, and the whole disc gets a slow, glowing
+   breathing pulse — the "cool, bright effect while it spins" a player
+   asked for, on top of (not instead of) the win/loss effects that already
+   exist for when it lands. */
+.wheel-stage.is-spinning .wheel-rays {
+    animation-duration: 1.4s;
+    opacity: 1;
+}
+
+@keyframes wheel-spin-glow {
+    0%, 100% { filter: drop-shadow(0 22px 46px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 18px rgba(252, 218, 24, 0.35)); }
+    50% { filter: drop-shadow(0 22px 46px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 40px rgba(252, 218, 24, 0.65)); }
+}
+
+.wheel-stage.is-spinning #wheel-svg {
+    animation: wheel-spin-glow 1.1s ease-in-out infinite;
+}
+
+@keyframes wheel-rays-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ---------- Disc ---------- */
 .wheel-disc {
-    width: 100%;
-    height: 100%;
-    will-change: transform;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
 }
 
-.wheel-disc svg {
+#wheel-svg {
     display: block;
     width: 100%;
     height: 100%;
-    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.5));
+    /* The root <svg> element clips to its viewBox by default (UA-stylesheet
+       overflow:hidden) — a real, confirmed bug, not a display quirk: the
+       viewBox is "0 0 600 600" (a 600x600 SQUARE, half-extent 300 from the
+       center at 300,300), but the outer rim's glow circle is drawn at
+       r=296 with stroke-width=26, so its own outer edge sits at r=309 —
+       9 units past the viewBox boundary. A circle that size, clipped by a
+       square only 300 units from center, gets visibly flattened at
+       exactly its top/bottom/left/right (the 4 points where a circle
+       reaches furthest from center relative to an inscribed square) while
+       its diagonals stay rounded — the "flat/square sides, top, bottom,
+       left, right" a player reported, and precisely reproducible from the
+       numbers above rather than a rendering guess. overflow: visible lets
+       the rim's glow render as the complete, unclipped circle it's meant
+       to be, consistent with .wheel-bg-glow just behind it, which is
+       *already* deliberately allowed to bleed past the disc's own box. */
+    overflow: visible;
+    filter: drop-shadow(0 22px 46px rgba(0, 0, 0, 0.65));
+}
+
+.sector-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 800;
+    fill: #FCF79A;
+    stroke: #4a2402;
+    stroke-width: 5;
+    paint-order: stroke;
+}
+
+/* The three narrowest wedges (x100, x50, x25) sit close together at the
+   top — a thinner outline keeps their small text legible instead of the
+   stroke swallowing the letterforms. */
+.sector-label-sm {
+    stroke-width: 2.5;
+}
+
+.peg {
+    fill: url(#g-peg);
+    stroke: #4a2402;
+    stroke-width: 1.5;
+    filter: drop-shadow(0 1.5px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 3px rgba(255, 216, 74, 0.5));
+}
+
+/* Struck by the pointer as it passes underneath during a spin — see
+   POINTER_IMPACT_ANGLE_DEG in wheel.js, which toggles this per peg. */
+.peg.is-struck {
+    filter: drop-shadow(0 0 6px #FCEF5E);
+}
+
+/* ---------- Pointer ---------- */
+/* Fixed at the top, independent of the disc's own rotation. wheel.js drives
+   its transform directly (always re-including the translateX(-50%) centering
+   alongside the physics offset) via the Web Animations API for precise,
+   per-peg timing — no CSS keyframes here on purpose. */
+.wheel-pointer-mount {
+    position: absolute;
+    top: -3%;
+    left: 50%;
+    width: 13%;
+    z-index: 5;
+    transform: translateX(-50%);
+    transform-origin: 50% 20%;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 20px rgba(252, 218, 24, 0.6));
 }
 
 .wheel-pointer {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* ---------- Win state ---------- */
+@keyframes wheel-win-pulse {
+    0%, 100% { filter: drop-shadow(0 22px 46px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 0 rgba(252, 218, 24, 0)); }
+    50% { filter: drop-shadow(0 22px 46px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 55px rgba(252, 218, 24, 0.9)); }
+}
+
+.wheel-stage.is-winning #wheel-svg {
+    animation: wheel-win-pulse 0.9s ease-in-out 3;
+}
+
+/* The single sector the wheel actually landed on (see highlightWinningSector
+   in wheel.js) — a bright pulsing outline so the win reads as "this exact
+   wedge" rather than just a generic whole-wheel glow. */
+@keyframes sector-winner-pulse {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 216, 74, 0.6)); }
+    50% { filter: drop-shadow(0 0 22px rgba(255, 216, 74, 1)); }
+}
+
+.sector.is-winner {
+    stroke: #FFE98A;
+    stroke-width: 4;
+    animation: sector-winner-pulse 0.9s ease-in-out 3;
+}
+
+/* A brief, subdued pulse behind the wheel on a loss — deliberately the
+   opposite of the win treatment: cool/dark instead of gold/bright, and
+   over quickly instead of repeating, so losing never competes with winning
+   for the player's attention. */
+@keyframes wheel-lose-pulse {
+    0% { box-shadow: 0 0 0 rgba(111, 11, 199, 0); }
+    35% { box-shadow: 0 0 60px 10px rgba(111, 11, 199, 0.35); }
+    100% { box-shadow: 0 0 0 rgba(111, 11, 199, 0); }
+}
+
+.wheel-stage.is-losing {
+    animation: wheel-lose-pulse 0.8s ease-out 1;
+    border-radius: 50%;
+}
+
+/* Small golden sparkle/star particles spawned from the wheel's hub on a
+   win (see spawnSparkles in wheel.js) — pure CSS+DOM, auto-removed after
+   one run so they never pile up across repeated spins. */
+@keyframes sparkle-fly {
+    0% { transform: translate(-50%, -50%) rotate(var(--sparkle-angle)) translateY(0) scale(0); opacity: 1; }
+    70% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) rotate(var(--sparkle-angle)) translateY(calc(-1 * var(--sparkle-distance))) scale(1); opacity: 0; }
+}
+
+.wheel-sparkle {
     position: absolute;
-    top: -6px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 12px solid transparent;
-    border-right: 12px solid transparent;
-    border-top: 20px solid var(--gold);
-    z-index: 2;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    z-index: 6;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffffff 0%, #FFE98A 35%, #F69E08 70%, transparent 100%);
+    box-shadow: 0 0 8px 2px rgba(255, 216, 74, 0.85);
+    pointer-events: none;
+    animation: sparkle-fly 700ms ease-out forwards;
 }
 
-@keyframes wheel-settle {
-    0% { transform: scale(1); }
-    40% { transform: scale(0.98); }
-    100% { transform: scale(1); }
-}
-
-.wheel-stage.is-landing {
-    animation: wheel-settle 0.25s ease;
+/* ---------- Result ----------
+   Its own dedicated block below the wheel (real flex flow, spaced by the
+   parent's gap) — it can't ever end up behind the disc regardless of how
+   large the wheel gets. */
+.wheel-result {
+    min-height: 2.1em;
 }
 
 .wheel-message {
-    min-height: 1.4em;
-    margin: 0 0 20px;
-    font-weight: 600;
+    max-width: 46ch;
+    margin: 0 auto;
+    font-size: clamp(0.95rem, 1.5vw, 1.3rem);
+    font-weight: 700;
+    color: #FCF79A;
+    text-shadow: 0 0 18px rgba(252, 218, 24, 0.35);
     transition: opacity 0.15s;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.4em;
+}
+
+/* Plain placeholder / connection-error text has no kicker/value/sub
+   children, so it doesn't need the flex row treatment. */
+.wheel-message:not(.is-win):not(.is-big-win):not(.is-lose) {
+    display: block;
+}
+
+.wheel-result-kicker {
+    font-size: 0.65em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    flex-basis: 100%;
+}
+
+.wheel-result-value {
+    font-size: 1.6em;
+    font-weight: 800;
+}
+
+.wheel-result-value--lose {
+    color: var(--text-dim);
+}
+
+.wheel-result-sub {
+    font-size: 0.75em;
+    font-weight: 600;
+    opacity: 0.85;
 }
 
 .wheel-message.is-win {
     color: var(--gold);
+    text-shadow: 0 0 24px rgba(252, 218, 24, 0.6);
 }
 
 .wheel-message.is-big-win {
     color: var(--gold);
-    font-size: 1.15rem;
+    font-size: clamp(1.2rem, 2vw, 1.6rem);
+    text-shadow: 0 0 32px rgba(252, 218, 24, 0.75);
 }
 
 .wheel-message.is-lose {
     color: var(--text-dim);
     font-weight: 500;
+    text-shadow: none;
+}
+
+.wheel-message.is-lose .wheel-result-kicker {
+    color: var(--text-dim);
 }
 
 .wheel-message.is-error {
     color: var(--red);
+    text-shadow: none;
+}
+
+/* ---------- Controls ----------
+   A comfortably-narrow column even on a very wide stage — the wheel is the
+   hero, the form doesn't need to stretch edge-to-edge to feel intentional. */
+.wheel-controls {
+    width: 100%;
+    max-width: 460px;
 }
 
 .wheel-form {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
     align-items: stretch;
 }
 
 .wheel-form label {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--text-dim);
     text-align: left;
 }
@@ -1322,9 +1694,9 @@ a {
     background: var(--surface-2);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 10px 12px;
+    padding: 7px 14px;
     color: var(--text);
-    font-size: 1rem;
+    font-size: 0.95rem;
 }
 
 .wheel-form input[type="number"]:focus {
@@ -1332,39 +1704,93 @@ a {
     border-color: var(--gold);
 }
 
-.wheel-form button[type="submit"] {
-    margin-top: 8px;
+/* Premium CTA — a dedicated style rather than the site-wide flat .btn-primary,
+   so this one screen can have a louder, more "casino" spin button without
+   changing every other button on the site. */
+.wheel-spin-btn {
+    margin-top: 2px;
+    padding: 9px 20px;
+    border: 1px solid rgba(252, 239, 94, 0.5);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+    color: #241505;
+    cursor: pointer;
+    background: linear-gradient(180deg, #FCEF5E 0%, #F69E08 55%, #DC6407 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.55),
+        0 0 0 1px rgba(0, 0, 0, 0.25),
+        0 10px 26px -6px rgba(246, 158, 8, 0.55);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.wheel-spin-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.06);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 0 0 1px rgba(0, 0, 0, 0.25),
+        0 16px 34px -6px rgba(246, 158, 8, 0.7);
+}
+
+.wheel-spin-btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+    filter: brightness(0.97);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        0 0 0 1px rgba(0, 0, 0, 0.25),
+        0 6px 16px -4px rgba(246, 158, 8, 0.5);
+}
+
+.wheel-spin-btn:disabled {
+    opacity: 0.65;
+    cursor: default;
+    transform: none;
 }
 
 .multiplier-picker {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 6px;
+    margin-bottom: 2px;
 }
+
+/* Matches the wheel's sector gradients (app/templates/partials/wheel_machine.html)
+   exactly — same multiplier, same color family, on the wheel and on the
+   button that bets on it, so a player can match one to the other at a glance. */
+.multiplier-choice[data-multiplier="2"] { --mult-color: #F69E08; }
+.multiplier-choice[data-multiplier="5"] { --mult-color: #E70B5A; }
+.multiplier-choice[data-multiplier="10"] { --mult-color: #13B52A; }
+.multiplier-choice[data-multiplier="20"] { --mult-color: #147DEB; }
+.multiplier-choice[data-multiplier="25"] { --mult-color: #6F0BC7; }
+.multiplier-choice[data-multiplier="50"] { --mult-color: #DC1216; }
+.multiplier-choice[data-multiplier="100"] { --mult-color: #FCDA18; }
 
 .multiplier-choice {
     flex: 1 1 60px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 10px 6px;
+    background: linear-gradient(180deg, var(--surface-2), #0d0d10);
+    border: 2px solid var(--mult-color, var(--border));
+    color: var(--mult-color, var(--text-dim));
+    padding: 7px 6px;
     border-radius: var(--radius);
     font-weight: 700;
     font-family: inherit;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
-.multiplier-choice:hover {
-    border-color: var(--gold);
-    color: var(--gold);
+.multiplier-choice:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 14px -2px var(--mult-color, var(--gold));
 }
 
 .multiplier-choice.is-selected {
-    background: var(--gold);
-    border-color: var(--gold);
-    color: #141414;
+    background: var(--mult-color, var(--gold));
+    border-color: var(--mult-color, var(--gold));
+    color: #0a0a0b;
+    box-shadow: 0 0 22px -4px var(--mult-color, var(--gold));
 }
 
 .wheel-help {
@@ -1375,40 +1801,55 @@ a {
     margin: 0;
 }
 
-/* ---------- Responsive ---------- */
-@media (max-width: 1024px) {
-    .lobby-body {
-        grid-template-columns: 1fr;
+/* ---------- Responsive (mobile/tablet) ----------
+   The site was deliberately desktop-only for most of this project (no
+   @media breakpoints at all) per an earlier explicit request. This is the
+   reversal of that, per an equally explicit later request — a real mobile
+   pass, not a token one. Two breakpoints:
+     900px  — tablet and large phones: hamburger nav, stacked lobby
+              sidebar/footer/account columns, tighter section padding.
+     540px  — small phones: single-column footer/trust grid, smaller type
+              in a few dense spots (winners list, footer), extra-tight
+              page padding.
+   The wheel game mostly didn't need explicit rules here: .wheel-stage's
+   width is already `clamp(220px, min(70%, 38vh), 620px)` — a percentage
+   of its own panel plus a viewport-height term, not a fixed desktop
+   pixel size — so it already scales down correctly on a narrow phone
+   without any help. Only its container padding needed trimming so the
+   panel itself doesn't eat too much width on a 320-375px screen. */
+@media (max-width: 900px) {
+    .topbar-inner {
+        padding: 14px 20px;
+        gap: 16px;
     }
 
-    .lobby-sidebar {
-        position: static;
-        flex-direction: row;
-        flex-wrap: wrap;
+    .brand {
+        font-size: 1.3rem;
     }
 
-    .lobby-sidebar .sidebar-card {
-        flex: 1 1 260px;
+    .nav-toggle {
+        display: flex;
+        order: 3;
     }
 
-    .footer-inner {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
+    /* Collapsed by default on this breakpoint — JS (app.js's existing
+       #nav-toggle handler, previously inert with no CSS to act on) toggles
+       .is-open on click. Absolutely positioned as a dropdown below the
+       sticky header rather than pushing content down, so opening the menu
+       never shifts the page underneath it. */
     .main-nav {
+        display: none;
         position: absolute;
         top: 100%;
         left: 0;
         right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
         background: var(--surface);
         border-bottom: 1px solid var(--border);
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 12px 24px;
-        gap: 4px;
-        display: none;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        padding: 8px 0;
     }
 
     .main-nav.is-open {
@@ -1416,28 +1857,69 @@ a {
     }
 
     .main-nav a {
+        padding: 14px 20px;
+        border-bottom: none;
+        border-left: 2px solid transparent;
         width: 100%;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--border);
     }
 
-    .nav-toggle {
-        display: flex;
+    .main-nav a:hover {
+        border-color: var(--gold);
+        background: var(--surface-2);
     }
 
-    .footer-inner {
+    .topbar {
+        position: sticky;
+    }
+
+    .username {
+        display: none; /* balance + Log Out already identify the session; saves precious header width */
+    }
+
+    .auth-actions {
+        gap: 8px;
+    }
+
+    .content {
+        padding-top: 24px;
+    }
+
+    /* .auth-card (login/register) is the one page that sits directly in
+       .content with no page-level horizontal padding of its own — without
+       this it would stretch edge-to-edge on any viewport narrower than
+       its 380px max-width instead of floating with breathing room. */
+    .auth-card {
+        width: calc(100% - 32px);
+        margin: 32px auto;
+    }
+
+    .section-title {
+        padding: 0 20px;
+        font-size: 1.25rem;
+    }
+
+    .game-row {
+        padding: 0 20px;
+        margin-bottom: 40px;
+    }
+
+    .lobby {
+        padding: 0 20px;
+        margin-bottom: 48px;
+    }
+
+    .lobby-toolbar {
+        margin-bottom: 20px;
+    }
+
+    .game-search {
+        width: 100%;
+    }
+
+    /* Sidebar (Latest Winners) drops below the game grid instead of
+       sitting beside it — a fixed 320px column has no room on a phone. */
+    .lobby-body {
         grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 480px) {
-    .topbar-inner {
-        padding: 10px 16px;
-    }
-
-    .section-title, .lobby, .trust, .game-row {
-        padding-left: 16px;
-        padding-right: 16px;
     }
 
     .game-grid {
@@ -1445,7 +1927,122 @@ a {
         gap: 14px;
     }
 
-    .modal-card {
-        padding: 28px 20px 24px;
+    .trust {
+        padding: 0 20px;
+    }
+
+    .trust-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .footer-inner {
+        grid-template-columns: 1fr 1fr;
+        padding: 36px 20px 20px;
+        gap: 28px;
+    }
+
+    .account-page {
+        padding: 0 20px;
+    }
+
+    .account-header {
+        flex-wrap: wrap;
+    }
+
+    .account-balance {
+        text-align: left;
+    }
+
+    .account-forms {
+        grid-template-columns: 1fr;
+    }
+
+    /* The transaction history table doesn't reflow onto a phone width —
+       let it scroll horizontally inside its own box rather than crushing
+       every column or overflowing the whole page. */
+    .account-history {
+        overflow-x: auto;
+    }
+
+    .account-table {
+        min-width: 480px;
+    }
+
+    .slot-machine {
+        max-width: 100%;
+        padding: 22px 16px;
+        margin: 16px auto;
+    }
+
+    .wheel-page {
+        padding: 0 12px 32px;
+    }
+
+    .wheel-machine {
+        padding: clamp(10px, 4vw, 22px) clamp(10px, 4vw, 20px) clamp(10px, 3vw, 18px);
+    }
+
+    .multiplier-picker {
+        gap: 5px;
+    }
+
+    .multiplier-choice {
+        flex-basis: 30%;
+        font-size: 0.9rem;
     }
 }
+
+@media (max-width: 540px) {
+    .brand-word {
+        display: none; /* logo mark alone is enough at this width; "AURUM" text was crowding the balance chip */
+    }
+
+    .balance {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+    }
+
+    .game-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 10px;
+    }
+
+    .game-row-scroller .game-card {
+        flex-basis: 160px;
+    }
+
+    .trust-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-inner {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        text-align: left;
+    }
+
+    .winners-list li {
+        font-size: 0.85rem;
+    }
+
+    .auth-card {
+        padding: 28px 20px;
+    }
+
+    .multiplier-choice {
+        flex-basis: 45%;
+    }
+}
+
+/* ---------- Confetti overlay (app/static/js/confetti.js, PixiJS) ---------- */
+#confetti-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    /* Sits above the toast stack (z-index 200) so a win celebration reads
+       on top of everything, but never intercepts clicks/taps. */
+    z-index: 999;
+    pointer-events: none;
+}
+

@@ -27,9 +27,9 @@ async def spin(
     db: AsyncSession, *, user_id: int, bet: int, chosen_multiplier: int, game_id: int | None = None
 ) -> WheelOutcome:
     if bet < MIN_BET or bet > MAX_BET:
-        raise WheelSpinError(f"Ставка має бути від {MIN_BET} до {MAX_BET} ₴")
+        raise WheelSpinError(f"Bet must be between {MIN_BET} and {MAX_BET} ₴")
     if chosen_multiplier not in MULTIPLIERS:
-        raise WheelSpinError("Невірний вибір множника")
+        raise WheelSpinError("Invalid multiplier choice")
 
     # with_for_update() row-locks the wallet under Postgres so two concurrent
     # spins from the same account can't both read the same starting balance.
@@ -37,7 +37,7 @@ async def spin(
     wallet = result.scalar_one()
 
     if wallet.balance < bet:
-        raise WheelSpinError("Недостатньо коштів на балансі")
+        raise WheelSpinError("Insufficient balance")
 
     landed = spin_wheel()
 
@@ -49,7 +49,7 @@ async def spin(
             type=TransactionType.BET,
             amount=-bet,
             balance_after=wallet.balance,
-            description=f"Golden Wheel — ставка на x{chosen_multiplier}",
+            description=f"Golden Wheel — bet on x{chosen_multiplier}",
         )
     )
 
@@ -63,7 +63,7 @@ async def spin(
                 type=TransactionType.WIN,
                 amount=winnings,
                 balance_after=wallet.balance,
-                description=f"Golden Wheel — виграш x{landed}",
+                description=f"Golden Wheel — win x{landed}",
             )
         )
 
@@ -71,7 +71,7 @@ async def spin(
         await db.commit()
     except IntegrityError as exc:
         await db.rollback()
-        raise WheelSpinError("Недостатньо коштів на балансі") from exc
+        raise WheelSpinError("Insufficient balance") from exc
 
     await db.refresh(wallet)
     return WheelOutcome(landed_multiplier=landed, chosen_multiplier=chosen_multiplier, winnings=winnings, balance=wallet.balance)

@@ -1,0 +1,17 @@
+.venv
+venv
+casino.db
+*.db
+*.sqlite3
+.env
+.idea
+.claude
+.pytest_cache
+htmlcov
+.coverage
+tests
+alembic.ini
+docker-compose.yml
+Dockerfile
+.dockerignore
+README.md

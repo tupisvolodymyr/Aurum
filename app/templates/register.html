@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Реєстрація — AURUM{% endblock %}
+{% block title %}Sign Up — AURUM{% endblock %}
 
 {% block content %}
 <div class="auth-card">
-    <h1>Реєстрація</h1>
+    <h1>Sign Up</h1>
 
     {% if error %}
     <p class="error">{{ error }}</p>
@@ -13,22 +13,22 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <input type="hidden" name="next" value="{{ next or '' }}">
 
-        <label for="username">Ім'я користувача</label>
+        <label for="username">Username</label>
         <input type="text" id="username" name="username" required minlength="3" maxlength="32"
                pattern="[a-zA-Z0-9_]+" autocomplete="username">
 
         <label for="email">Email</label>
         <input type="email" id="email" name="email" required autocomplete="email">
 
-        <label for="password">Пароль</label>
+        <label for="password">Password</label>
         <input type="password" id="password" name="password" required minlength="10" autocomplete="new-password">
 
-        <label for="password_confirm">Підтвердження пароля</label>
+        <label for="password_confirm">Confirm Password</label>
         <input type="password" id="password_confirm" name="password_confirm" required minlength="10" autocomplete="new-password">
 
-        <button type="submit" class="btn btn-primary btn-block">Створити акаунт</button>
+        <button type="submit" class="btn btn-primary btn-block">Create Account</button>
     </form>
 
-    <p class="auth-switch">Вже є акаунт? <a href="/login{{ '?next=' + next|urlencode if next else '' }}">Увійти</a></p>
+    <p class="auth-switch">Already have an account? <a href="/login{{ '?next=' + next|urlencode if next else '' }}">Log In</a></p>
 </div>
 {% endblock %}

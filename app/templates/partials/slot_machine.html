@@ -1,0 +1,38 @@
+{# Shared slot-machine markup, used by both the full page (games/slots.html)
+   and the colorful embedded game window (games/slots_embed.html) — a single
+   source of truth so the two presentations never drift out of sync. The
+   element ids are load-bearing: app/static/js/slots.js binds to them. #}
+{% macro slot_machine(csrf_token, min_bet, max_bet) %}
+<div class="slot-machine" id="slot-machine">
+    <div class="slot-reels" id="slot-reels">
+        <div class="reel-window"><div class="reel-strip"><div class="reel-symbol">❔</div></div></div>
+        <div class="reel-window"><div class="reel-strip"><div class="reel-symbol">❔</div></div></div>
+        <div class="reel-window"><div class="reel-strip"><div class="reel-symbol">❔</div></div></div>
+    </div>
+
+    <p class="slot-message" id="slot-message" aria-live="polite"></p>
+
+    <form id="slot-form" class="slot-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <label for="bet">Bet (₴)</label>
+        <input type="number" id="bet" name="bet" min="{{ min_bet }}" max="{{ max_bet }}" step="1" value="{{ min_bet }}" required>
+
+        <button type="submit" class="btn btn-primary" id="spin-button">Spin</button>
+    </form>
+
+    <details class="paytable">
+        <summary>Payout Table</summary>
+        <table>
+            <tr><td>7️⃣ 7️⃣ 7️⃣</td><td>x500</td></tr>
+            <tr><td>💎 💎 💎</td><td>x150</td></tr>
+            <tr><td>⭐ ⭐ ⭐</td><td>x50</td></tr>
+            <tr><td>🔔 🔔 🔔</td><td>x25</td></tr>
+            <tr><td>🍊 🍊 🍊</td><td>x10</td></tr>
+            <tr><td>🍋 🍋 🍋</td><td>x8</td></tr>
+            <tr><td>🍒 🍒 🍒</td><td>x5</td></tr>
+            <tr><td>any 2 matching</td><td>x1 (bet returned)</td></tr>
+        </table>
+    </details>
+</div>
+{% endmacro %}

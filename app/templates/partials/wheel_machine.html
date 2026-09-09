@@ -1,0 +1,240 @@
+{# Premium "Golden Wheel" — a real SVG casino wheel (gradients, bevels, glow),
+   not a flat pie chart or a static image. Geometry (sector boundaries, peg
+   positions, star points) is hand-computed to match app/games/wheel.py's
+   SEGMENTS exactly (same 8-sector order/weights) — see the comment block at
+   the top of that file for the angle math. The pointer is a separate fixed
+   element (app/static/js/wheel.js drives its own spring-physics animation,
+   independent of the disc's rotation) so it can "react" to each peg. #}
+{% macro wheel_machine(csrf_token, min_bet, max_bet, multipliers) %}
+<div class="wheel-machine" id="wheel-machine">
+    <div class="wheel-stage" id="wheel-stage">
+        <div class="wheel-bg-glow" aria-hidden="true"></div>
+        <div class="wheel-rays" aria-hidden="true"></div>
+
+        <div class="wheel-pointer-mount" id="wheel-pointer-mount">
+            <svg class="wheel-pointer" id="wheel-pointer" viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="pointer-gold" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#FCEF5E"/>
+                        <stop offset="45%" stop-color="#F69E08"/>
+                        <stop offset="100%" stop-color="#DC6407"/>
+                    </linearGradient>
+                    <radialGradient id="pointer-gem" cx="35%" cy="30%" r="75%">
+                        <stop offset="0%" stop-color="#FF6FA0"/>
+                        <stop offset="55%" stop-color="#E70B5A"/>
+                        <stop offset="100%" stop-color="#7a0a3a"/>
+                    </radialGradient>
+                </defs>
+                <ellipse cx="60" cy="30" rx="34" ry="22" fill="url(#pointer-gold)" stroke="#7a4a06" stroke-width="2"/>
+                <circle cx="60" cy="30" r="15" fill="url(#pointer-gem)" stroke="#FCEF5E" stroke-width="2.5"/>
+                <circle cx="53" cy="24" r="4" fill="#ffffff" opacity="0.75"/>
+                <path d="M32,38 L88,38 L60,110 Z" fill="url(#pointer-gold)" stroke="#7a4a06" stroke-width="2.5" stroke-linejoin="round"/>
+                <path d="M45,42 L75,42 L60,90 Z" fill="#FCEF5E" opacity="0.35"/>
+            </svg>
+        </div>
+
+        <div class="wheel-disc" id="wheel-disc">
+            <svg viewBox="0 0 600 600" id="wheel-svg" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="g-x100" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#FCEF5E"/>
+                        <stop offset="45%" stop-color="#FCDA18"/>
+                        <stop offset="100%" stop-color="#F69E08"/>
+                    </linearGradient>
+                    <linearGradient id="g-x50" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#FF6659"/>
+                        <stop offset="45%" stop-color="#DC1216"/>
+                        <stop offset="100%" stop-color="#990000"/>
+                    </linearGradient>
+                    <linearGradient id="g-x25" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#B36BFF"/>
+                        <stop offset="45%" stop-color="#6F0BC7"/>
+                        <stop offset="100%" stop-color="#1A0E56"/>
+                    </linearGradient>
+                    <linearGradient id="g-x20" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#5AA9FF"/>
+                        <stop offset="45%" stop-color="#147DEB"/>
+                        <stop offset="100%" stop-color="#0761DB"/>
+                    </linearGradient>
+                    <linearGradient id="g-x10" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#6BE87F"/>
+                        <stop offset="45%" stop-color="#13B52A"/>
+                        <stop offset="100%" stop-color="#0C7A1D"/>
+                    </linearGradient>
+                    <linearGradient id="g-x5" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#FF6FA0"/>
+                        <stop offset="45%" stop-color="#E70B5A"/>
+                        <stop offset="100%" stop-color="#A00F56"/>
+                    </linearGradient>
+                    <linearGradient id="g-x2" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#FCD98A"/>
+                        <stop offset="45%" stop-color="#F69E08"/>
+                        <stop offset="100%" stop-color="#E86A07"/>
+                    </linearGradient>
+
+                    <radialGradient id="g-gloss" cx="38%" cy="30%" r="65%">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4"/>
+                        <stop offset="55%" stop-color="#ffffff" stop-opacity="0.08"/>
+                        <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+                    </radialGradient>
+                    <radialGradient id="g-inner-shadow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#000000" stop-opacity="0.55"/>
+                        <stop offset="35%" stop-color="#000000" stop-opacity="0.15"/>
+                        <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+                    </radialGradient>
+                    <radialGradient id="g-rim" cx="50%" cy="35%" r="70%">
+                        <stop offset="0%" stop-color="#FCEF5E"/>
+                        <stop offset="40%" stop-color="#F69E08"/>
+                        <stop offset="75%" stop-color="#DC6407"/>
+                        <stop offset="100%" stop-color="#8a4304"/>
+                    </radialGradient>
+                    <radialGradient id="g-hub" cx="40%" cy="32%" r="70%">
+                        <stop offset="0%" stop-color="#FCF79A"/>
+                        <stop offset="40%" stop-color="#FCDA18"/>
+                        <stop offset="100%" stop-color="#DC6407"/>
+                    </radialGradient>
+                    <radialGradient id="g-star" cx="38%" cy="28%" r="75%">
+                        <stop offset="0%" stop-color="#FCEF5E"/>
+                        <stop offset="50%" stop-color="#F69E08"/>
+                        <stop offset="100%" stop-color="#994f04"/>
+                    </radialGradient>
+                    <radialGradient id="g-peg" cx="35%" cy="30%" r="70%">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="35%" stop-color="#FCEF5E"/>
+                        <stop offset="70%" stop-color="#F69E08"/>
+                        <stop offset="100%" stop-color="#8a4304"/>
+                    </radialGradient>
+
+                    <filter id="f-soft-glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="6" result="blur"/>
+                        <feMerge>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+
+                <!-- Outer glowing gold rim: dark shadow -> dark edge -> bright
+                     metallic ring -> inner bevel -> bright highlight line,
+                     layered outside-in so the rim reads as a real polished
+                     metal band with depth instead of one flat stroke. -->
+                <circle cx="300" cy="300" r="298" fill="none" stroke="#000000" stroke-width="6" opacity="0.35"/>
+                <circle cx="300" cy="300" r="296" fill="none" stroke="url(#g-rim)" stroke-width="26" filter="url(#f-soft-glow)"/>
+                <circle cx="300" cy="300" r="296" fill="none" stroke="#3a1a02" stroke-width="2"/>
+                <circle cx="300" cy="300" r="289" fill="none" stroke="#FFE98A" stroke-width="1.4" opacity="0.55"/>
+                <circle cx="300" cy="300" r="283" fill="none" stroke="#FCEF5E" stroke-width="2" opacity="0.8"/>
+                <circle cx="300" cy="300" r="271" fill="none" stroke="#3a1a02" stroke-width="3" opacity="0.65"/>
+
+                <!-- Sectors -->
+                <g id="wheel-sectors">
+                    <path class="sector" data-index="0" fill="url(#g-x100)" d="M300,300 L300.0,50.0 A250,250 0 0 1 313.08,50.34 Z"/>
+                    <path class="sector" data-index="1" fill="url(#g-x50)" d="M300,300 L313.08,50.34 A250,250 0 0 1 339.11,53.08 Z"/>
+                    <path class="sector" data-index="2" fill="url(#g-x20)" d="M300,300 L339.11,53.08 A250,250 0 0 1 409.59,75.3 Z"/>
+                    <path class="sector" data-index="3" fill="url(#g-x10)" d="M300,300 L409.59,75.3 A250,250 0 0 1 516.51,175.0 Z"/>
+                    <path class="sector" data-index="4" fill="url(#g-x5)" d="M300,300 L516.51,175.0 A250,250 0 0 1 549.39,317.44 Z"/>
+                    <path class="sector" data-index="5" fill="url(#g-x5)" d="M300,300 L549.39,317.44 A250,250 0 0 1 497.0,453.92 Z"/>
+                    <path class="sector" data-index="6" fill="url(#g-x2)" d="M300,300 L497.0,453.92 A250,250 0 1 1 243.76,56.41 Z"/>
+                    <path class="sector" data-index="7" fill="url(#g-x25)" d="M300,300 L243.76,56.41 A250,250 0 0 1 300.0,50.0 Z"/>
+                </g>
+
+                <!-- Subtle center shadow + global gloss dome, over all sectors. -->
+                <circle cx="300" cy="300" r="250" fill="url(#g-inner-shadow)"/>
+                <circle cx="300" cy="300" r="250" fill="url(#g-gloss)"/>
+
+                <!-- Thick illuminated gold dividers between sectors. -->
+                <g id="wheel-separators" stroke="#FCDA18" stroke-width="5" stroke-linecap="round" filter="url(#f-soft-glow)">
+                    <line x1="300" y1="300" x2="300.0" y2="50.0"/>
+                    <line x1="300" y1="300" x2="313.08" y2="50.34"/>
+                    <line x1="300" y1="300" x2="339.11" y2="53.08"/>
+                    <line x1="300" y1="300" x2="409.59" y2="75.3"/>
+                    <line x1="300" y1="300" x2="516.51" y2="175.0"/>
+                    <line x1="300" y1="300" x2="549.39" y2="317.44"/>
+                    <line x1="300" y1="300" x2="497.0" y2="453.92"/>
+                    <line x1="300" y1="300" x2="243.76" y2="56.41"/>
+                </g>
+
+                <!-- Labels -->
+                <g id="wheel-labels" class="wheel-labels" text-anchor="middle" dominant-baseline="middle">
+                    <text class="sector-label sector-label-sm" x="305.5" y="90.07" font-size="13">x100</text>
+                    <text class="sector-label sector-label-sm" x="326.65" y="46.4" font-size="14">x50</text>
+                    <text class="sector-label" x="360.14" y="109.26" font-size="20">x20</text>
+                    <text class="sector-label" x="429.58" y="161.04" font-size="25">x10</text>
+                    <text class="sector-label" x="485.13" y="257.26" font-size="25">x5</text>
+                    <text class="sector-label" x="477.38" y="368.09" font-size="25">x5</text>
+                    <text class="sector-label" x="143.97" y="399.4" font-size="34">x2</text>
+                    <text class="sector-label sector-label-sm" x="271.13" y="46.64" font-size="15">x25</text>
+                </g>
+
+                <!-- Golden light-bulb pegs around the inner rim. -->
+                <g id="wheel-pegs">
+                    <circle class="peg" data-index="0" cx="300.0" cy="28.0" r="7.5"/>
+                    <circle class="peg" data-index="1" cx="370.4" cy="37.27" r="7.5"/>
+                    <circle class="peg" data-index="2" cx="436.0" cy="64.44" r="7.5"/>
+                    <circle class="peg" data-index="3" cx="492.33" cy="107.67" r="7.5"/>
+                    <circle class="peg" data-index="4" cx="535.56" cy="164.0" r="7.5"/>
+                    <circle class="peg" data-index="5" cx="562.73" cy="229.6" r="7.5"/>
+                    <circle class="peg" data-index="6" cx="572.0" cy="300.0" r="7.5"/>
+                    <circle class="peg" data-index="7" cx="562.73" cy="370.4" r="7.5"/>
+                    <circle class="peg" data-index="8" cx="535.56" cy="436.0" r="7.5"/>
+                    <circle class="peg" data-index="9" cx="492.33" cy="492.33" r="7.5"/>
+                    <circle class="peg" data-index="10" cx="436.0" cy="535.56" r="7.5"/>
+                    <circle class="peg" data-index="11" cx="370.4" cy="562.73" r="7.5"/>
+                    <circle class="peg" data-index="12" cx="300.0" cy="572.0" r="7.5"/>
+                    <circle class="peg" data-index="13" cx="229.6" cy="562.73" r="7.5"/>
+                    <circle class="peg" data-index="14" cx="164.0" cy="535.56" r="7.5"/>
+                    <circle class="peg" data-index="15" cx="107.67" cy="492.33" r="7.5"/>
+                    <circle class="peg" data-index="16" cx="64.44" cy="436.0" r="7.5"/>
+                    <circle class="peg" data-index="17" cx="37.27" cy="370.4" r="7.5"/>
+                    <circle class="peg" data-index="18" cx="28.0" cy="300.0" r="7.5"/>
+                    <circle class="peg" data-index="19" cx="37.27" cy="229.6" r="7.5"/>
+                    <circle class="peg" data-index="20" cx="64.44" cy="164.0" r="7.5"/>
+                    <circle class="peg" data-index="21" cx="107.67" cy="107.67" r="7.5"/>
+                    <circle class="peg" data-index="22" cx="164.0" cy="64.44" r="7.5"/>
+                    <circle class="peg" data-index="23" cx="229.6" cy="37.27" r="7.5"/>
+                </g>
+
+                <!-- Center hub: concentric gold rings + jewel-like star. -->
+                <g id="wheel-hub">
+                    <circle cx="300" cy="300" r="78" fill="#1a0e18" stroke="url(#g-rim)" stroke-width="8"/>
+                    <circle cx="300" cy="300" r="66" fill="none" stroke="#FCDA18" stroke-width="2" opacity="0.85"/>
+                    <circle cx="300" cy="300" r="58" fill="url(#g-hub)" stroke="#8a4304" stroke-width="2"/>
+                    <polygon points="300.0,254.0 311.17,284.63 343.75,285.79 318.07,305.87 327.04,337.21 300.0,319.0 272.96,337.21 281.93,305.87 256.25,285.79 288.83,284.63" fill="url(#g-star)" stroke="#7a3f04" stroke-width="1.5"/>
+                    <ellipse cx="286" cy="278" rx="14" ry="7" fill="#ffffff" opacity="0.55"/>
+                </g>
+            </svg>
+        </div>
+    </div>
+
+    <div class="wheel-result" id="wheel-result" aria-live="polite">
+        <p class="wheel-message" id="wheel-message">Place a bet and spin — your result appears here</p>
+    </div>
+
+    <div class="wheel-controls">
+        <form id="wheel-form" class="wheel-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="multiplier" id="chosen-multiplier" value="{{ multipliers[0] }}">
+
+            <label>Bet on Multiplier</label>
+            <div class="multiplier-picker" id="multiplier-picker">
+                {% for m in multipliers %}
+                <button type="button" class="multiplier-choice {% if loop.first %}is-selected{% endif %}" data-multiplier="{{ m }}">x{{ m }}</button>
+                {% endfor %}
+            </div>
+
+            <label for="bet">Bet (₴)</label>
+            <input type="number" id="bet" name="bet" min="{{ min_bet }}" max="{{ max_bet }}" step="1" value="{{ min_bet }}" required>
+
+            <button type="submit" class="wheel-spin-btn" id="wheel-spin-button">Spin the Wheel</button>
+        </form>
+
+        <details class="paytable">
+            <summary>How It Works</summary>
+            <p class="wheel-help">
+                Pick a multiplier and place your bet. If the wheel lands on it, you win your
+                bet multiplied by that number. The higher the multiplier, the smaller its slice
+                of the wheel — and the rarer it lands.
+            </p>
+        </details>
+    </div>
+</div>
+{% endmacro %}

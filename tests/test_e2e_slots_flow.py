@@ -50,7 +50,7 @@ async def test_spin_below_minimum_bet_is_rejected(client):
 
     resp = await client.post("/games/slots/spin", data={"bet": "1", "csrf_token": csrf2})
     assert resp.status_code == 400
-    assert "Ставка має бути" in resp.json()["error"]
+    assert "Bet must be between" in resp.json()["error"]
 
 
 async def test_spin_without_csrf_token_is_rejected(client):
@@ -78,6 +78,18 @@ async def test_slots_page_requires_login(client):
     resp = await client.get("/games/slots")
     assert resp.status_code == 200
     assert resp.url.path == "/login"
+
+
+async def test_slots_page_keeps_site_chrome_and_frame_options(client):
+    await _register(client, username="e2e_frame_opts", email="e2e_frame_opts@example.com")
+    resp = await client.get("/games/slots")
+    assert resp.status_code == 200
+    # The colorful "arcade" game box lives inside the normal page, with the
+    # site's own header/nav still present around it — not a separate
+    # embed/iframe document.
+    assert 'id="main-nav"' in resp.text
+    assert 'id="slot-form"' in resp.text
+    assert resp.headers["x-frame-options"] == "DENY"
 
 
 async def test_register_rejects_mismatched_passwords(client):

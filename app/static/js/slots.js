@@ -114,14 +114,14 @@
     setControlsDisabled(true);
     resetMessage();
     const originalLabel = spinButton.textContent;
-    spinButton.textContent = "Крутиться…";
+    spinButton.textContent = "Spinning…";
 
     try {
       const resp = await fetch("/games/slots/spin", { method: "POST", body: formData });
       const data = await resp.json();
 
       if (!resp.ok) {
-        messageEl.textContent = data.error || "Щось пішло не так. Спробуй ще раз.";
+        messageEl.textContent = data.error || "Something went wrong. Please try again.";
         messageEl.classList.add("is-error");
         if (typeof data.balance === "number") window.AURUM.flashBalance(`${data.balance} ₴`);
         return;
@@ -132,20 +132,27 @@
       if (data.winnings > 0) {
         const isBigWin = data.multiplier >= BIG_WIN_MULTIPLIER;
         reelsContainer.classList.add("is-win");
-        messageEl.textContent = `Виграш: +${data.winnings} ₴ (x${data.multiplier})`;
+        messageEl.textContent = `Win: +${data.winnings} ₴ (x${data.multiplier})`;
         messageEl.classList.add(isBigWin ? "is-big-win" : "is-win");
+        // Small burst from the reels on any win, a bigger full-width one
+        // for a big win — keeps small wins feeling alive without the
+        // celebration overload a full-size burst every time would cause.
+        const originY = reelsContainer.getBoundingClientRect().top + 40;
         if (isBigWin) {
           machineEl.classList.add("is-celebrating");
-          window.AURUM.showToast(`Великий виграш! +${data.winnings} ₴`);
+          window.AURUM.showToast(`Big win! +${data.winnings} ₴`);
+          window.AURUM.confetti?.({ count: 220, spread: window.innerWidth * 0.7, y: originY });
+        } else {
+          window.AURUM.confetti?.({ count: 60, spread: window.innerWidth * 0.25, y: originY });
         }
       } else {
-        messageEl.textContent = "Не пощастило. Спробуй ще раз!";
+        messageEl.textContent = "No luck this time. Try again!";
         messageEl.classList.add("is-lose");
       }
 
       window.AURUM.flashBalance(`${data.balance} ₴`);
     } catch {
-      messageEl.textContent = "Не вдалося з'єднатися з сервером.";
+      messageEl.textContent = "Couldn't connect to the server.";
       messageEl.classList.add("is-error");
     } finally {
       setControlsDisabled(false);

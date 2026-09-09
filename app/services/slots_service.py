@@ -24,7 +24,7 @@ class SpinOutcome:
 
 async def spin(db: AsyncSession, *, user_id: int, bet: int, game_id: int | None = None) -> SpinOutcome:
     if bet < MIN_BET or bet > MAX_BET:
-        raise SpinError(f"Ставка має бути від {MIN_BET} до {MAX_BET} ₴")
+        raise SpinError(f"Bet must be between {MIN_BET} and {MAX_BET} ₴")
 
     # with_for_update() row-locks the wallet under Postgres so two concurrent
     # spins from the same account can't both read the same starting balance.
@@ -35,7 +35,7 @@ async def spin(db: AsyncSession, *, user_id: int, bet: int, game_id: int | None 
     wallet = result.scalar_one()
 
     if wallet.balance < bet:
-        raise SpinError("Недостатньо коштів на балансі")
+        raise SpinError("Insufficient balance")
 
     outcome = play()
 
@@ -47,7 +47,7 @@ async def spin(db: AsyncSession, *, user_id: int, bet: int, game_id: int | None 
             type=TransactionType.BET,
             amount=-bet,
             balance_after=wallet.balance,
-            description="Slots — ставка",
+            description="Slots — bet",
         )
     )
 
@@ -61,7 +61,7 @@ async def spin(db: AsyncSession, *, user_id: int, bet: int, game_id: int | None 
                 type=TransactionType.WIN,
                 amount=winnings,
                 balance_after=wallet.balance,
-                description=f"Slots — виграш x{outcome.multiplier}",
+                description=f"Slots — win x{outcome.multiplier}",
             )
         )
 
@@ -69,7 +69,7 @@ async def spin(db: AsyncSession, *, user_id: int, bet: int, game_id: int | None 
         await db.commit()
     except IntegrityError as exc:
         await db.rollback()
-        raise SpinError("Недостатньо коштів на балансі") from exc
+        raise SpinError("Insufficient balance") from exc
 
     await db.refresh(wallet)
     return SpinOutcome(result=outcome, winnings=winnings, balance=wallet.balance)
